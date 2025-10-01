@@ -1,4 +1,4 @@
-Pipeline de Análise de Variantes Somáticas
+Assinaturas Mutacionais
 =======================================================
 
 1. Restaurar ambiente R (renv):
