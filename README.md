@@ -14,9 +14,12 @@ Pipeline de Análise de Variantes Somáticas
 3. Configuração (config.yaml):
    vcf_dir: "samples"
    group_file: "groups.txt"
+   indel_file: "indels.txt"
+   # Obs.: devem estar no mesmo diretório
 
 4. Resultados:
-   - results/plots : gráficos gerados com o MutationalPatterns
+   - results/plots : gráficos gerados com o MutationalPatterns;
+   - (você pode alterar a visualização do gráfico com ggplot2)
    - results/rds   : objetos R intermediários
    - results/tables: resumos e conferências de contagem
 
