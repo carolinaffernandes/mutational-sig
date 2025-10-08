@@ -1,0 +1,25 @@
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# renv (somente pastas de bibliotecas e cache)
+renv/library/
+renv/staging/
+renv/python/
+renv/cache/
+
+results/
+plots/
+rds/
+tables/
+samples/
+
+*.log
+*.tmp
+*.bak
+*.swp
+
+.DS_Store
+Thumbs.db
+desktop.ini
