@@ -9,12 +9,6 @@ renv/staging/
 renv/python/
 renv/cache/
 
-results/
-plots/
-rds/
-tables/
-samples/
-
 *.log
 *.tmp
 *.bak
