@@ -12,10 +12,10 @@ Assinaturas Mutacionais
    - config.yaml : configurações de caminhos
 
 # 3. Configuração (config.yaml):
-   vcf_dir: "samples"
-   group_file: "groups.txt"
-   indel_file: "indels.txt"
-   Obs.: devem estar no mesmo diretório
+   - vcf_dir: "samples"
+   - group_file: "groups.txt"
+   - indel_file: "indels.txt"
+   - Obs.: devem estar no mesmo diretório
 
 # 4.  Resultados:
    - results/plots : gráficos gerados com o MutationalPatterns;
