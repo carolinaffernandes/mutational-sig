@@ -52,13 +52,9 @@ save_rds <- function(obj, name) {
   saveRDS(obj, file.path(rds_dir, paste0(name, ".rds")))
 }
 save_plot <- function(plot, name, width = 10, height = 10) {
-  ggsave(filename = file.path(plots_dir, paste0(name, ".pdf")),
-         plot = plot, width = width, height = height)
-}
-save_png <- function(plot, name, width = 10, height = 10) {
   ggsave(filename = file.path(plots_dir, paste0(name, ".png")),
          plot = plot, width = width, height = height)
-} #fiz essa função para caso eu queira salvar algo em png
+}
 
 # ------------------ Referência ------------------
 ref_genome <- "BSgenome.Hsapiens.UCSC.hg38"
@@ -75,7 +71,7 @@ samples_per_group <- group_file_name %>%
   summarise(count = n_distinct(sample), .groups = "drop")
 
 sample_names <- group_file_name$sample
-sample_id <- sub("_indels.hg38_multianno.txt", "", sample_names)
+sample_id <- sub("_unique_indels.hg38_multianno.txt", "", sample_names)
 groups <- group_file_name$groups
 
 myfiles <- lapply(file.path(vcf_dir, sample_names), function(x) {
@@ -178,12 +174,36 @@ indel_counts <- count_indel_contexts(indel_grl)
 head(indel_counts)
 
 plot_indel <- plot_indel_contexts(indel_counts, condensed = FALSE, same_y = TRUE)
+plot_indel <- plot_indel +
+  theme(
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 20),
+    axis.text.x = element_text(size = 15, angle = 90, hjust = 0.5),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 3, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.x = element_text(size = 20, face = "plain", color = "black"), # tipo de sub
+    strip.text.y = element_text(size = 20, face = "plain", color = "black") #samples
+  )
 plot_indel
-save_plot(plot_indel, "indel_condensed", width = 30, height = 15)
+save_plot(plot_indel, "indel_condensed", width = 25, height = 7)
 
 plot_main_contexts <- plot_main_indel_contexts(indel_counts)
-plot_main_contexts
-save_plot(plot_main_contexts, "indel_main_context")
+plot_main_contexts <- plot_main_contexts +
+  theme(
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.text.x = element_text(size = 15, angle = 90, hjust = 0.5),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 3, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.x = element_text(size = 20, face = "bold", color = "black"), # tipo de sub
+    strip.text.y = element_text(size = 20, face = "bold", color = "black") #samples
+  )
+
+save_plot(plot_main_contexts, "indel_main_context", height = 10, width = 15)
 
 signatures_indel = get_known_signatures(muttype = "indel")
 fit_res_indel <- fit_to_signatures(indel_counts, signatures_indel)
@@ -195,16 +215,42 @@ signatures_indel_reduced <- signatures_indel[, selected_sigs_indel]
 strict_refit_indel <- fit_to_signatures_strict(
   mut_mat = indel_counts,
   signatures = signatures_indel_reduced,
-  max_delta = 0.01,
+  max_delta = 0.03,
   method = "best_subset"
 )
 
 fit_res_indel_strict <- strict_refit_indel$fit_res
 indel_absolute <- plot_contribution(fit_res_indel_strict$contribution, mode = "absolute")
-indel_relative <-plot_contribution(fit_res_indel_strict$contribution, mode = "relative")
+indel_absolute <- indel_absolute +
+  theme(
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 15),
+    axis.text.x = element_text(size = 15, angle = 90, hjust = 0.5),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 3, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.x = element_text(size = 20, face = "bold", color = "black"), # tipo de sub
+    strip.text.y = element_text(size = 20, face = "bold", color = "black") #samples
+  )
 
-save_plot(indel_absolute, "indel_DB_absolute", width = 15, height = 17)
-save_plot(indel_relative, "indel_DB_relative", width = 15, height = 17)
+indel_relative <-plot_contribution(fit_res_indel_strict$contribution, mode = "relative")
+indel_relative <- indel_relative +
+  theme(
+    legend.title = element_text(size = 25),
+    legend.text = element_text(size = 25),
+    axis.text.x = element_text(size = 15, angle = 90, hjust = 0.5),
+    axis.text.y = element_text(size = 15),
+    axis.title.x = element_text(size = 3, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.x = element_text(size = 20, face = "bold", color = "black"), # tipo de sub
+    strip.text.y = element_text(size = 20, face = "bold", color = "black") #samples
+  )
+
+
+save_plot(indel_absolute, "indel_DB_absolute", width = 7, height = 15)
+save_plot(indel_relative, "indel_DB_relative", width = 7, height = 15)
 
 # Plot combinado
 combined_plot <- indel_relative | indel_absolute
