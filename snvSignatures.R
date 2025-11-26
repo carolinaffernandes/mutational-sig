@@ -52,13 +52,10 @@ save_rds <- function(obj, name) {
   saveRDS(obj, file.path(rds_dir, paste0(name, ".rds")))
 }
 save_plot <- function(plot, name, width = 10, height = 10) {
-  ggsave(filename = file.path(plots_dir, paste0(name, ".pdf")),
-         plot = plot, width = width, height = height)
-}
-save_png <- function(plot, name, width = 10, height = 10) {
   ggsave(filename = file.path(plots_dir, paste0(name, ".png")),
          plot = plot, width = width, height = height)
-} #fiz essa função para caso eu queira salvar algo em png
+}
+#mudei para salvar em png
 
 # ------------------ Referência ------------------
 ref_genome <- "BSgenome.Hsapiens.UCSC.hg38"
@@ -75,8 +72,10 @@ samples_per_group <- group_file_name %>%
   summarise(count = n_distinct(sample), .groups = "drop")
 
 sample_names <- group_file_name$sample
-sample_id <- sub("_snps.hg38_multianno.txt", "", sample_names)
+sample_id <- sub("_unique_snps.hg38_multianno.txt", "", sample_names)
 groups <- group_file_name$groups
+
+sample_id
 
 myfiles <- lapply(file.path(vcf_dir, sample_names), function(x) {
   fread(x, header = TRUE, sep = "\t", colClasses = c("Ref" = "character", "Alt" = "character"))
@@ -179,7 +178,7 @@ plot_type_occurrences_groups <- plot_spectrum(
   CT = TRUE, by = groups, indv_points = TRUE, 
 )
 
-save_plot(plot_type_occurrences_groups, "snv_spectrum_por_grupo")
+save_plot(plot_type_occurrences_groups, "snv_spectrum_por_grupo", height = 10, width = 15)
 
 # ------------------ PER SAMPLES ------------------
 type_occurrences_samples <- mut_type_occurrences(sample_grList, ref_genome)
@@ -192,7 +191,7 @@ mut_mat <- mut_matrix(vcf_list = sample_grList, ref_genome = ref_genome)
 save_rds(mut_mat, "snv_mut_mat")
 
 plot96 <- plot_96_profile(mut_mat, ymax = 0.05)
-save_plot(plot96, "snv_profile_96_ct")
+save_plot(plot96, "snv_profile_96_ct", height = 10, width = 15)
 
 mut_mat_ext_context <- mut_matrix(sample_grList, ref_genome, extension = 2)
 save_rds(mut_mat_ext_context, "snv_mut_mat_ext_context")
@@ -200,7 +199,7 @@ save_rds(mut_mat_ext_context, "snv_mut_mat_ext_context")
 heatmap <- plot_profile_heatmap(mut_mat_ext_context, by= groups)
 river <- plot_river(mut_mat_ext_context)
 
-save_plot(heatmap, "snv_heatmap_extended")
+save_plot(heatmap, "snv_heatmap_extended", width = 15, height = 7)
 save_plot(river, "snv_riverplot_extended")
 
 ############################## 192 contextos e Strand Bias
@@ -217,8 +216,25 @@ mut_mat_strand <- mut_matrix_stranded(
 save_rds(mut_mat_strand, "snv_mut_mat_strand")
 
 # Plot perfil 192
-plot192 <- plot_192_profile(mut_mat_strand, condensed = FALSE, ymax = 0.08)
-save_plot(plot192, "snv_plot_192_profile", width = 30, height = 20)
+plot192 <- plot_192_profile(mut_mat_strand, condensed = FALSE, ymax = 0.07)
+
+plot192 <- plot192 +
+  labs(x = "Samples", y = "Relative contribution") +
+  theme(
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20),
+    axis.text.x = element_text(size = 7, angle = 45, hjust = 0.3),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 10, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.x = element_text(size = 20, face = "plain", color = "black"), # tipo de sub
+    strip.text.y = element_text(size = 20, face = "plain", color = "black") #samples
+  )
+plot192
+
+
+save_plot(plot192, "snv_plot_192_profile", width = 20, height = 5)
 
 if(exists("plot96")){
   library(gridExtra)
@@ -244,54 +260,161 @@ write.table(strand_bias_notstrict, file = file.path(tables_dir, "snv_strand_bias
 # Plots de strand bias
 ps1 <- plot_strand(strand_counts, mode = "relative")
 ps2 <- plot_strand(strand_counts, mode = "absolute")
+ps2 <- ps2 +
+  theme(
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20),
+    axis.text.x = element_text(size = 14, angle = 45, hjust = 0.3),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 20, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.y = element_text(size = 15, face = "bold", color = "black"),
+    strip.text.x = element_text(size = 25, face = "plain", color = "black") #sample label
+  )
 ps3 <- plot_strand_bias(strand_bias_notstrict, sig_type = "p")
+ps3 <- ps3 +
+  theme(
+    legend.title = element_text(size = 20),
+    legend.text = element_text(size = 20),
+    axis.text.x = element_text(size = 14, angle = 45, hjust = 0.3),
+    axis.text.y = element_text(size = 20),
+    axis.title.x = element_text(size = 10, face = "bold"),
+    axis.title.y = element_text(size = 20, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5),
+    strip.text.x = element_text(size = 30, face = "plain", color = "black"), #sample label
+    strip.text.y = element_text(size = 15, face = "bold", color = "black")
+  )
 
-plot_strandbias <- grid.arrange(ps1, ps2, ps3)
-save_plot(plot_strandbias, "snv_plot_strandbias", width = 20, height = 25)
+plot_strandbias <- grid.arrange(ps2, ps3)
+save_plot(plot_strandbias, "snv_plot_strandbias", width = 14, height = 12)
 
 # ------------------ Fit para assinaturas COSMIC ------------------
 cosmic_signatures <- get_known_signatures(muttype = "snv", source="COSMIC", genome = "GRCh38")
 
 fit_res <- fit_to_signatures(mut_mat, cosmic_signatures)
 save_rds(fit_res, "snv_fit_res")
-
-plot_contribution(fit_res$contribution, coord_flip = FALSE)
-
-contri_boots <- fit_to_signatures_bootstrapped(mut_mat,
-                                               cosmic_signatures,
-                                               n_boots = 100,
-                                               method = "strict")
-save_rds(contri_boots, "snv_contri_boots")
-
-plot_bootstrapped1 <- plot_bootstrapped_contribution(contri_boots)
-plot_bootstrapped2 <- plot_bootstrapped_contribution(contri_boots, 
-                                                     mode = "relative", 
-                                                     plot_type = "dotplot")
-save_plot(plot_bootstrapped1, "snv_bootstraped_absolute", width = 30, height = 25)
-save_plot(plot_bootstrapped2, "snv_bootstraped_relative", width = 30, height = 25)
+# 
+# plot_contribution(fit_res$contribution, coord_flip = FALSE)
+# 
+# contri_boots <- fit_to_signatures_bootstrapped(mut_mat,
+#                                                cosmic_signatures,
+#                                                n_boots = 100,
+#                                                method = "strict")
+# save_rds(contri_boots, "snv_contri_boots")
+# 
+# plot_bootstrapped1 <- plot_bootstrapped_contribution(contri_boots)
+# plot_bootstrapped2 <- plot_bootstrapped_contribution(contri_boots, 
+#                                                      mode = "relative", 
+#                                                      plot_type = "dotplot")
+# save_plot(plot_bootstrapped1, "snv_bootstraped_absolute", width = 30, height = 25)
+# save_plot(plot_bootstrapped2, "snv_bootstraped_relative", width = 30, height = 25)
 
 strict_refit <- fit_to_signatures_strict(mut_mat, cosmic_signatures, max_delta = 0.0016)
 fit_res_strict <- strict_refit$fit_res
 save_rds(fit_res_strict, "snv_fit_res_strict")
 
+# Renomear amostras
+colnames(fit_res_strict$contribution) <- c("M3", "M6")
+
 # Selecionar assinaturas com contribuição > 0
 selected_sig2 <- which(rowSums(fit_res_strict$contribution) > 0)
-prelative <- plot_contribution(fit_res_strict$contribution[selected_sig2,],
-                               coord_flip = FALSE,
-                               mode = "relative")
-pabsolute <- plot_contribution(fit_res_strict$contribution[selected_sig2,],
-                               coord_flip = FALSE,
-                               mode = "absolute")
-save_plot(prelative, "snv_SBS_relative", width = 15, height = 17)
-save_plot(pabsolute, "snv_SBS_absolute", width = 15, height = 17)
+
+# Recriar os gráficos após renomear
+prelative <- plot_contribution(
+  fit_res_strict$contribution[selected_sig2, ],
+  coord_flip = FALSE,
+  mode = "relative"
+)
+
+pabsolute <- plot_contribution(
+  fit_res_strict$contribution[selected_sig2, ],
+  coord_flip = FALSE,
+  mode = "absolute"
+)
+
+# Renomear amostras
+colnames(fit_res_strict$contribution) <- c("M3", "M6")
+
+# Selecionar assinaturas com contribuição > 0
+selected_sig2 <- which(rowSums(fit_res_strict$contribution) > 0)
+
+# Recriar os gráficos após renomear
+prelative <- plot_contribution(
+  fit_res_strict$contribution[selected_sig2, ],
+  coord_flip = FALSE,
+  mode = "relative"
+)
+
+pabsolute <- plot_contribution(
+  fit_res_strict$contribution[selected_sig2, ],
+  coord_flip = FALSE,
+  mode = "absolute"
+)
+
+# Estilo + rótulos
+prelative <- prelative +
+  labs(x = "Samples", y = "Relative contribution") +
+  theme(
+    legend.title = element_text(size = 30),
+    legend.text = element_text(size = 30),
+    axis.text.x = element_text(size = 30, angle = 0, hjust = 1),
+    axis.text.y = element_text(size = 30),
+    axis.title.x = element_text(size = 30, face = "bold"),
+    axis.title.y = element_text(size = 30, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5)
+  )
+prelative
+
+pabsolute <- pabsolute +
+  labs(x = "Samples", y = "Absolute contribution") +
+  theme(
+    legend.title = element_text(size = 30),
+    legend.text = element_text(size = 30),
+    axis.text.x = element_text(size = 30, angle = 0, hjust = 1),
+    axis.text.y = element_text(size = 30),
+    axis.title.x = element_text(size = 30, face = "bold"),
+    axis.title.y = element_text(size = 30, face = "bold"),
+    plot.title = element_text(size = 30, face = "bold", hjust = 0.5)
+  )
+
+pabsolute
+
+save_plot(prelative, "snv_SBS_relative", width = 10, height = 17)
+save_plot(pabsolute, "snv_SBS_absolute", width = 10, height = 17)
 
 # Plot combinado
 combined_plot <- prelative | pabsolute
 save_plot(combined_plot, "snv_SBS_combined", width = 30, height = 17)
+combined_plot
 
 # Salvar contribuição absoluta selecionada
 write.table(fit_res_strict$contribution[selected_sig2,],
             file.path(tables_dir, "snv_mutationalSignaturesABSOLUTE.txt"),
             sep = "\t", row.names = TRUE)
 
+# ------------ De novo ----------------
 
+mut_mat <- mut_mat + 0.0001
+
+library("ccfindR")
+sc <- scsignaturessc <- scNMFSet(count = mut_mat)
+set.seed(4)
+estimate_bayes <- vb_factorize(sc, ranks = 1:5, nrun = 10, 
+                               progress.bar = FALSE, verbose = 0)
+plot(estimate_bayes)
+
+nmf_res_bayes <- extract_signatures(mut_mat, rank = 2, nrun = 1, 
+                                    nmf_type = "variational_bayes")
+nmf_res_bayes <- rename_nmf_signatures(nmf_res_bayes, cosmic_signatures, cutoff = 0.85)
+nmf_res_bayes$signatures
+nmf_res_bayes$contribution
+save_table(nmf_res_bayes$contribution, "nmf_res-contribuition")
+
+plot_96_profile(nmf_res_bayes$signatures, condensed = TRUE, ymax = 0.1)
+plot_contribution(nmf_res_bayes$contribution, nmf_res_bayes$signature,
+                  mode = "absolute"
+)
+plot_contribution(nmf_res_bayes$contribution, nmf_res_bayes$signature,
+                  mode = "relative"
+)
